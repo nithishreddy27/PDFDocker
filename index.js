@@ -1,23 +1,45 @@
 const puppeteer = require("puppeteer");
 const express = require("express");
-
+const fs = require("fs");
 const app = express();
 // const browser =
-
-app.get("/start", async (req, res) => {
+app.use(express.json());
+function savePdfBufferToFile(pdfBuffer, filePath) {
+  fs.writeFile(filePath, pdfBuffer, (err) => {
+    if (err) {
+      console.error("Error writing PDF file:", err);
+    } else {
+      console.log("PDF file saved successfully!");
+    }
+  });
+}
+app.post("/start", async (req, res) => {
   try {
-    console.log("browser started");
-    await puppeteer.launch({
+    console.log("inside start", req.body);
+    const htmlContent = req.body.htmlContent;
+
+    const browser = await puppeteer.launch({
       executablePath: "/usr/bin/google-chrome",
       headless: "new",
       ignoreDefaultArgs: ["--disable-extensions"],
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
-    console.log("browser lauched");
-    res.send("browser lauched sucessfully");
+
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+    // Generate the PDF
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+
+    await browser.close();
+
+    res.status(200).json({ pdfBuffer });
   } catch (error) {
-    console.log(`browser not lauched ${error}`);
-    res.send(`browser not lauched ${error}`);
+    console.error(`Failed to generate PDF: ${error}`);
+    res.status(500).send(`Failed to generate PDF: ${error}`);
   }
 });
 
