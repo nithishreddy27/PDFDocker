@@ -2,8 +2,10 @@ const puppeteer = require("puppeteer");
 const express = require("express");
 const fs = require("fs");
 const app = express();
+const cors = require("cors");
 // const browser =
 app.use(express.json());
+app.use(cors());
 function savePdfBufferToFile(pdfBuffer, filePath) {
   fs.writeFile(filePath, pdfBuffer, (err) => {
     if (err) {
