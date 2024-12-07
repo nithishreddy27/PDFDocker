@@ -20,15 +20,27 @@ app.post("/start", async (req, res) => {
     console.log("inside start", req.body);
     const htmlContent = req.body.htmlContent;
 
+    // Add the link to Tailwind CSS CDN or your locally served file
+    const updatedHtmlContent = `
+      <html>
+        <head>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body>
+          ${htmlContent}
+        </body>
+      </html>
+    `;
+
     const browser = await puppeteer.launch({
       executablePath: "/usr/bin/google-chrome",
-      headless: "new",
+      headless: true, // Ensure headless mode is enabled
       ignoreDefaultArgs: ["--disable-extensions"],
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    await page.setContent(updatedHtmlContent, { waitUntil: "networkidle0" }); // Wait for network to be idle before rendering
 
     // Generate the PDF
     const pdfBuffer = await page.pdf({
